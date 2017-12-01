@@ -1,0 +1,11 @@
+package: github.com/9seconds/ddoctor
+homepage: https://github.com/9seconds/ddoctor
+license: MIT
+owners:
+- name: Sergey Arkhipov
+  email: nineseconds@yandex.ru
+import:
+- package: gopkg.in/alecthomas/kingpin.v2
+  version: ^2.2.5
+- package: github.com/sirupsen/logrus
+  version: ^1.0.3
