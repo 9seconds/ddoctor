@@ -12,7 +12,7 @@ type CheckResult struct {
 }
 
 type Checker interface {
-	Run(ctx context.Context, results chan<- *CheckResult)
+	Run(context.Context, chan<- *CheckResult)
 }
 
 type commonChecker struct {

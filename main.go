@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"time"
 
@@ -63,9 +64,32 @@ func main() {
 		}).Info("Check")
 	}
 
-	channel := make(chan *checkers.CheckResult)
-	checker, _ := checkers.NewShellChecker(1*time.Second, "ls -la")
-	go checker.Run(context.Background(), channel)
+	checks := make([]checkers.Checker, 0, len(cf.Checks))
+	for _, value := range cf.Checks {
+		var instance checkers.Checker
+		var err error
+
+		switch value.Type {
+		case "shell":
+			instance, err = checkers.NewShellChecker(value.Timeout.Duration, value.Exec)
+		case "command":
+			instance, err = checkers.NewCommandChecker(value.Timeout.Duration, value.Exec)
+		case "network":
+			instance, err = checkers.NewNetworkChecker(value.Timeout.Duration, value.URL.URL)
+		}
+
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		checks = append(checks, instance)
+	}
+
+	channel := make(chan *checkers.CheckResult, len(checks))
+
+	u, _ := url.Parse("http://ya.ru")
+	checker2, _ := checkers.NewNetworkChecker(2*time.Second, u)
+	go checker2.Run(context.Background(), channel)
 
 	fmt.Println(<-channel)
 }
