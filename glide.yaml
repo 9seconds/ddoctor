@@ -9,3 +9,7 @@ import:
   version: ^2.2.5
 - package: github.com/sirupsen/logrus
   version: ^1.0.3
+- package: github.com/BurntSushi/toml
+  version: ~0.3.0
+- package: github.com/google/shlex
+- package: github.com/juju/errors

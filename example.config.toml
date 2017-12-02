@@ -1,0 +1,23 @@
+periodicity = "10s"
+host = "localhost"
+port = 8050
+
+[[checks]]
+type = "network"
+url = "http://localhost/ping"
+
+[[checks]]
+type = "network"
+url = "tcp:///tmp/app.sock/ping"
+
+[[checks]]
+type = "network"
+url = "udp:///tmp/app.sock/ping"
+
+[[checks]]
+type = "command"
+exec = "ls -la"
+
+[[checks]]
+type = "shell"
+exec = "ls -la | awk {print $2}"
