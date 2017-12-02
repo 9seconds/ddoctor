@@ -8,11 +8,11 @@ url = "http://localhost/ping"
 
 [[checks]]
 type = "network"
-url = "tcp:///tmp/app.sock/ping"
+url = "tcp://%2Ftmp%2Fapp.sock/ping"
 
 [[checks]]
 type = "network"
-url = "udp:///tmp/app.sock/ping"
+url = "udp://%2Ftmp/app.sock/ping"
 
 [[checks]]
 type = "command"

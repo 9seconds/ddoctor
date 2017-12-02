@@ -1,9 +1,11 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -24,8 +26,35 @@ type urltype struct {
 }
 
 func (ut *urltype) UnmarshalText(text []byte) (err error) {
-	ut.URL, err = url.Parse(string(text))
-	return
+	chunks := strings.SplitN(string(text), "//", 2)
+
+	if len(chunks) != 2 {
+		return errors.New("Unknown scheme")
+	}
+	scheme, newUrl := chunks[0], chunks[1]
+
+	chunks = strings.SplitN(newUrl, "/", 2)
+	hostname := chunks[0]
+	rest := ""
+	if len(chunks) == 2 {
+		rest = chunks[1]
+		value, err := url.PathUnescape(hostname)
+		if err != nil {
+			return err
+		}
+		hostname = value
+		rest = "/" + rest
+	}
+
+	newUrl = fmt.Sprintf("%s//localhost:80%s", scheme, rest)
+	ut.URL, err = url.Parse(newUrl)
+	if err != nil {
+		return errors.Trace(err)
+	}
+
+	ut.URL.Host = hostname
+
+	return nil
 }
 
 type Config struct {

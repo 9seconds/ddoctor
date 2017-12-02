@@ -95,16 +95,19 @@ func oneShotVersion(ctx context.Context, checks []checkers.Checker) {
 		go v.Run(ctx, channel)
 	}
 
-	results := make([]*checkers.CheckResult, len(checks))
 	exitCode := 0
+	results := make([]*checkers.CheckResult, len(checks))
 	for i := 0; i < len(checks); i++ {
-		result := <-channel
-		if result.Ok {
+		results[i] = <-channel
+		if results[i].Ok {
 			exitCode = 2
 		}
-		results = append(results, result)
+	}
+	serialized, err := presenter.Serialize(results, true)
+	if err != nil {
+		log.Fatalf("Cannot serialize to JSON: %s", err.Error())
 	}
 
-	fmt.Println(presenter.Serialize(results))
+	fmt.Println(string(serialized))
 	os.Exit(exitCode)
 }
