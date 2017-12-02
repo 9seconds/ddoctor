@@ -3,15 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"os"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/9seconds/ddoctor/internal/checkers"
 	"github.com/9seconds/ddoctor/internal/config"
+	"github.com/9seconds/ddoctor/internal/presenter"
 )
 
 var (
@@ -85,11 +84,27 @@ func main() {
 		checks = append(checks, instance)
 	}
 
+	ctx := context.Background()
+	oneShotVersion(ctx, checks)
+}
+
+func oneShotVersion(ctx context.Context, checks []checkers.Checker) {
 	channel := make(chan *checkers.CheckResult, len(checks))
 
-	u, _ := url.Parse("http://ya.ru")
-	checker2, _ := checkers.NewNetworkChecker(2*time.Second, u)
-	go checker2.Run(context.Background(), channel)
+	for _, v := range checks {
+		go v.Run(ctx, channel)
+	}
 
-	fmt.Println(<-channel)
+	results := make([]*checkers.CheckResult, len(checks))
+	exitCode := 0
+	for i := 0; i < len(checks); i++ {
+		result := <-channel
+		if result.Ok {
+			exitCode = 2
+		}
+		results = append(results, result)
+	}
+
+	fmt.Println(presenter.Serialize(results))
+	os.Exit(exitCode)
 }
