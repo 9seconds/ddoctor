@@ -1,10 +1,13 @@
 periodicity = "10s"
 host = "localhost"
 port = 8050
+ok_status_code = 200
+nok_status_code = 500
 
 [[checks]]
 type = "network"
 url = "http://localhost/ping"
+status_codes = [200]
 
 [[checks]]
 type = "network"

@@ -19,7 +19,8 @@ type accessorFunc func() error
 type NetworkChecker struct {
 	commonChecker
 
-	URL *url.URL
+	URL         *url.URL
+	StatusCodes []int
 }
 
 type HTTPNetworkChecker struct {
@@ -35,6 +36,7 @@ func (nc *NetworkChecker) access(results chan<- *CheckResult, accessor accessorF
 
 	log.WithFields(log.Fields{
 		"url":     accessingURL,
+		"codes":   nc.StatusCodes,
 		"timeout": nc.Timeout,
 	}).Debug("Access url")
 
@@ -78,8 +80,13 @@ func (hnc *HTTPNetworkChecker) Run(ctx context.Context, results chan<- *CheckRes
 		defer response.Body.Close()
 
 		io.Copy(ioutil.Discard, response.Body)
+		for _, code := range hnc.StatusCodes {
+			if code == response.StatusCode {
+				return nil
+			}
+		}
 
-		return nil
+		return errors.Errorf("Incorrect status code %d %s", response.StatusCode, response.Status)
 	})
 }
 
@@ -105,15 +112,15 @@ func (tnc *TCPNetworkChecker) Run(ctx context.Context, results chan<- *CheckResu
 	})
 }
 
-func NewNetworkChecker(timeout time.Duration, urlstruct *url.URL) (Checker, error) {
+func NewNetworkChecker(timeout time.Duration, urlstruct *url.URL, codes []int) (Checker, error) {
 	switch urlstruct.Scheme {
 	case "http", "https":
 		return &HTTPNetworkChecker{
-			NetworkChecker: NetworkChecker{commonChecker{timeout}, urlstruct},
+			NetworkChecker: NetworkChecker{commonChecker{timeout}, urlstruct, codes},
 		}, nil
 	case "tcp", "udp":
 		return &TCPNetworkChecker{
-			NetworkChecker: NetworkChecker{commonChecker{timeout}, urlstruct},
+			NetworkChecker: NetworkChecker{commonChecker{timeout}, urlstruct, codes},
 		}, nil
 	default:
 		return nil, errors.Errorf("Unknown checker scheme %s", urlstruct.Scheme)

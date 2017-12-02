@@ -16,6 +16,12 @@ func validate(conf *Config) error {
 	if conf.Port == 0 {
 		return errors.New("HTTP endpoint port should be set")
 	}
+	if conf.OkStatus < 100 || conf.OkStatus >= 600 {
+		return errors.New("HTTP status code is incorrect")
+	}
+	if conf.NokStatus < 100 || conf.NokStatus >= 600 {
+		return errors.New("HTTP status code is incorrect")
+	}
 
 	for _, check := range conf.Checks {
 		if check.Timeout.Duration <= time.Duration(0) {
@@ -46,6 +52,12 @@ func validateNetwork(check *ConfigChecker) error {
 	}
 	if check.URL.URL == nil {
 		return errors.New("URL has to be defined for network checker")
+	}
+
+	for _, v := range check.StatusCodes {
+		if v < 100 || v >= 600 {
+			return errors.New("Unknown HTTP status code")
+		}
 	}
 
 	switch check.URL.Scheme {

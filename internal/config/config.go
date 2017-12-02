@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -11,6 +12,8 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/juju/errors"
 )
+
+var DEFAULT_STATUS_CODES = []int{http.StatusOK, http.StatusNoContent}
 
 type duration struct {
 	time.Duration
@@ -61,14 +64,17 @@ type Config struct {
 	Host        string
 	Port        uint16
 	Periodicity duration
+	OkStatus    int `toml:"ok_status_code"`
+	NokStatus   int `toml:"nok_status_code"`
 	Checks      []ConfigChecker
 }
 
 type ConfigChecker struct {
-	Type    string
-	Exec    string
-	URL     urltype
-	Timeout duration
+	Type        string
+	Exec        string
+	URL         urltype
+	StatusCodes []int `toml:"status_codes"`
+	Timeout     duration
 }
 
 func ParseConfigFile(file *os.File) (*Config, error) {
@@ -87,6 +93,9 @@ func ParseConfigFile(file *os.File) (*Config, error) {
 	for idx := range conf.Checks {
 		if conf.Checks[idx].Timeout.Duration == time.Duration(0) {
 			conf.Checks[idx].Timeout.Duration = conf.Periodicity.Duration
+		}
+		if len(conf.Checks[idx].StatusCodes) == 0 {
+			conf.Checks[idx].StatusCodes = DEFAULT_STATUS_CODES
 		}
 	}
 
